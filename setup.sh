@@ -1,59 +1,48 @@
 #!/usr/bin/env bash
 
-# Copyright 2019 Google LLC
-# Copyright updated for adaptation to Azure by [Your Name/Entity] in 2023
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Exit on error or uninitialized variable
+set -euo pipefail
 
-# Exit on error, error on undefined variable, and error on failure of a pipe's first command
-set -eEo pipefail
-
-# Check for Node.js and install if not present
-if ! command -v node &> /dev/null; then
-    echo "Node.js is not installed. Setting up Node.js"
-
-    # Install NVM to manage Node.js versions
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-
-    # Source NVM scripts to load it into the current session
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-    # Install the latest LTS version of Node.js using NVM
-    nvm install --lts
+# Check if NVM needs to be set up. Azure Cloud Shell might not persist across sessions.
+if ! command -v nvm &> /dev/null; then
+  echo "Setting up NVM..."
+  export NVM_DIR="$HOME/.nvm"
+  mkdir -p "$NVM_DIR"
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+  # shellcheck source=/dev/null
+  . "$NVM_DIR/nvm.sh"  # This loads nvm
 fi
 
-# Ensure npm is at the latest version
-npm install -g npm
-
-# Install dependencies for monolith application
 echo "Installing monolith dependencies..."
 cd monolith
 npm install
+echo "Monolith dependencies installed."
 
-# Install dependencies for microservices
 echo "Installing microservices dependencies..."
 cd ../microservices
 npm install
+echo "Microservices dependencies installed."
 
-# Install dependencies for React app
 echo "Installing React app dependencies..."
 cd ../react-app
 npm install
+echo "React app dependencies installed."
 
-# Build the React app
-echo "Building React app and placing into subprojects..."
+echo "Building React app and placing into sub projects..."
 npm run build
+echo "React app built and set up."
 
 echo "Setup completed successfully!"
+
+# Print reminder if nvm is not found in the path.
+if ! command -v nvm &> /dev/null; then
+  echo "###############################################################################"
+  echo "#                                   NOTICE                                    #"
+  echo "#                                                                             #"
+  echo "# Make sure you have a compatible nodeJS version with the following command:  #"
+  echo "#                                                                             #"
+  echo "# nvm install --lts                                                           #"
+  echo "# nvm use --lts                                                               #"
+  echo "#                                                                             #"
+  echo "###############################################################################"
+fi
