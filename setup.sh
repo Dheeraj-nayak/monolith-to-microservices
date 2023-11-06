@@ -1,48 +1,38 @@
 #!/usr/bin/env bash
 
-# Exit on error or uninitialized variable
-set -euo pipefail
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# Check if NVM needs to be set up. Azure Cloud Shell might not persist across sessions.
-if ! command -v nvm &> /dev/null; then
-  echo "Setting up NVM..."
-  export NVM_DIR="$HOME/.nvm"
-  mkdir -p "$NVM_DIR"
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-  # shellcheck source=/dev/null
-  . "$NVM_DIR/nvm.sh"  # This loads nvm
-fi
+set -eEo pipefail
 
-echo "Installing monolith dependencies..."
-cd monolith
+printf "Installing monolith dependencies...\n"
+cd ./monolith
 npm install
-echo "Monolith dependencies installed."
+printf "Completed.\n\n"
 
-echo "Installing microservices dependencies..."
+printf "Installing microservices dependencies...\n"
 cd ../microservices
 npm install
-echo "Microservices dependencies installed."
+printf "Completed.\n\n"
 
-echo "Installing React app dependencies..."
+printf "Installing React app dependencies...\n"
 cd ../react-app
 npm install
-echo "React app dependencies installed."
+printf "Completed.\n\n"
 
-echo "Building React app and placing into sub projects..."
+printf "Building React app and placing into sub projects...\n"
 npm run build
-echo "React app built and set up."
+printf "Completed.\n\n"
 
-echo "Setup completed successfully!"
-
-# Print reminder if nvm is not found in the path.
-if ! command -v nvm &> /dev/null; then
-  echo "###############################################################################"
-  echo "#                                   NOTICE                                    #"
-  echo "#                                                                             #"
-  echo "# Make sure you have a compatible nodeJS version with the following command:  #"
-  echo "#                                                                             #"
-  echo "# nvm install --lts                                                           #"
-  echo "# nvm use --lts                                                               #"
-  echo "#                                                                             #"
-  echo "###############################################################################"
-fi
+printf "Setup completed successfully!\n"
