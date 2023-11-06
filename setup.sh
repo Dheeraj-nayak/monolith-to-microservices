@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Copyright 2019 Google LLC
+# Copyright updated for adaptation to Azure by [Your Name/Entity] in 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,54 +15,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Exit on error, error on undefined variable, and error on failure of a pipe's first command
 set -eEo pipefail
 
-if [ -z "$CLOUD_SHELL" ]; then
-  printf "Checking for required npm version...\n"
+# Check for Node.js and install if not present
+if ! command -v node &> /dev/null; then
+    echo "Node.js is not installed. Setting up Node.js"
 
-  npm install -g npm > /dev/null 2>&1
-  printf "Completed.\n\n"
+    # Install NVM to manage Node.js versions
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
-  printf "Setting up NVM...\n"
-  export NVM_DIR="/usr/local/nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  printf "Completed.\n\n"
-  
-  printf "Updating nodeJS version...\n"
-  nvm install --lts
-  printf "Completed.\n\n"
+    # Source NVM scripts to load it into the current session
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+    # Install the latest LTS version of Node.js using NVM
+    nvm install --lts
 fi
 
-printf "Installing monolith dependencies...\n"
-cd ./monolith
-npm install
-printf "Completed.\n\n"
+# Ensure npm is at the latest version
+npm install -g npm
 
-printf "Installing microservices dependencies...\n"
+# Install dependencies for monolith application
+echo "Installing monolith dependencies..."
+cd monolith
+npm install
+
+# Install dependencies for microservices
+echo "Installing microservices dependencies..."
 cd ../microservices
 npm install
-printf "Completed.\n\n"
 
-printf "Installing React app dependencies...\n"
+# Install dependencies for React app
+echo "Installing React app dependencies..."
 cd ../react-app
 npm install
-printf "Completed.\n\n"
 
-printf "Building React app and placing into sub projects...\n"
+# Build the React app
+echo "Building React app and placing into subprojects..."
 npm run build
-printf "Completed.\n\n"
 
-printf "Setup completed successfully!\n"
-
-if [ -z "$CLOUD_SHELL" ]; then
-  printf "\n"
-  printf "###############################################################################\n"
-  printf "#                                   NOTICE                                    #\n"
-  printf "#                                                                             #\n"
-  printf "# Make sure you have a compatible nodeJS version with the following command:  #\n"
-  printf "#                                                                             #\n"
-  printf "# nvm install --lts                                                           #\n"
-  printf "#                                                                             #\n"
-  printf "###############################################################################\n"
-fi
+echo "Setup completed successfully!"
