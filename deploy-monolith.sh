@@ -3,7 +3,7 @@
 # Variables
 RESOURCE_GROUP=cicd_microservices
 ACR_NAME=cicdmicroservicesacr # Replace with your own unique ACR name.
-AKS_NAME=cicdmicroservicesacr # Replace with your desired AKS cluster name.
+AKS_NAME=cicdmicroservicesaks # Replace with your desired AKS cluster name.
 REGION=eastus
 MONOLITH_IMAGE_TAG=monolith:1.0.0
 
