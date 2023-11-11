@@ -8,36 +8,32 @@ REGION=eastus
 MONOLITH_IMAGE_TAG=monolith:1.0.0
 
 # Create a Resource Group
-echo "Creating Resource Group..."
-az group create --name $RESOURCE_GROUP --location $REGION
+#echo "Creating Resource Group..."
+#az group create --name $RESOURCE_GROUP --location $REGION
 
 # Create an ACR
-echo "Creating Azure Container Registry..."
-az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
+#echo "Creating Azure Container Registry..."
+#az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
 
 # Get the ACR login server which will be used to tag the images
 ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query loginServer --output tsv)
-
-# Enable ACR Admin User (if not already done)
-echo "Enabling ACR Admin User..."
-az acr update -n $ACR_NAME --admin-enabled true
 
 # Login to ACR
 echo "Logging into ACR..."
 az acr login --name $ACR_NAME
 
 # Build Monolith Container
-echo "Building Monolith Container..."
-cd monolith
-docker build -t $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG .
-cd ..
+#echo "Building Monolith Container..."
+#cd monolith
+#docker build -t $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG .
+#cd ..
 
 # Push Monolith Container to ACR
-echo "Pushing Monolith Container to ACR..."
-docker push $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
+#echo "Pushing Monolith Container to ACR..."
+#docker push $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
 
 # Get ACR Repository ID
-ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+#ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
 
 # Create AKS Cluster if not exists (can be skipped if the cluster is already set up)
 # Uncomment the following lines if you need to create an AKS cluster
