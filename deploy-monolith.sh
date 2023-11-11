@@ -1,33 +1,71 @@
 #!/bin/bash
 
-# Copyright 2019 Google LLC
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     https://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Variables
+RESOURCE_GROUP=cicd_microservices
+ACR_NAME=cicdmicroservicesacr # Replace with your own unique ACR name.
+AKS_NAME=cicdmicroservicesacr # Replace with your desired AKS cluster name.
+REGION=eastus
+MONOLITH_IMAGE_TAG=monolith:1.0.0
 
-printf "Enabling Cloud Build APIs...\n"
-gcloud services enable cloudbuild.googleapis.com
-printf "Completed.\n\n"
+# Create a Resource Group
+echo "Creating Resource Group..."
+az group create --name $RESOURCE_GROUP --location $REGION
 
-printf "Building Monolith Container...\n"
-cd ~/monolith-to-microservices/monolith
-gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:1.0.0 .
-printf "Completed.\n\n"
+# Create an ACR
+echo "Creating Azure Container Registry..."
+az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
 
-printf "Deploying Monolith To GKE Cluster...\n"
-kubectl create deployment monolith --image=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:1.0.0
-kubectl expose deployment monolith --type=LoadBalancer --port 80 --target-port 8080
-printf "Completed.\n\n"
+# Get the ACR login server which will be used to tag the images
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query loginServer --output tsv)
 
-printf "Please run the following command to find the IP address for the monolith service: kubectl get service monolith\n\n"
+# Enable ACR Admin User (if not already done)
+echo "Enabling ACR Admin User..."
+az acr update -n $ACR_NAME --admin-enabled true
 
-printf "Deployment completed successfully!\n"
+# Login to ACR
+echo "Logging into ACR..."
+az acr login --name $ACR_NAME
+
+# Build Monolith Container
+echo "Building Monolith Container..."
+cd monolith
+docker build -t $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG .
+cd ..
+
+# Push Monolith Container to ACR
+echo "Pushing Monolith Container to ACR..."
+docker push $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
+
+# Get ACR Repository ID
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+
+# Create AKS Cluster if not exists (can be skipped if the cluster is already set up)
+# Uncomment the following lines if you need to create an AKS cluster
+echo "Creating AKS Cluster..."
+az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --node-count 3 --enable-addons monitoring --generate-ssh-keys --location $REGION
+
+# Get AKS credentials (needed for kubectl commands)
+echo "Getting AKS credentials..."
+az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_NAME --overwrite-existing
+
+# Deploy Monolith to AKS Cluster
+echo "Deploying Monolith to AKS Cluster..."
+kubectl create deployment monolith --image=$ACR_LOGIN_SERVER/$MONOLITH_IMAGE_TAG
+
+# Expose Monolith Deployment as a LoadBalancer
+echo "Exposing Monolith Deployment as a LoadBalancer..."
+kubectl expose deployment monolith --type=LoadBalancer --port=80 --target-port=8080
+
+# Wait for the LoadBalancer to receive an external IP
+echo "Waiting for LoadBalancer to receive an external IP..."
+while [[ $(kubectl get svc monolith -o 'jsonpath={..status.loadBalancer.ingress[0].ip}') == "" ]]; do 
+    echo "Waiting for end point..."
+    kubectl get svc monolith
+    sleep 10
+done
+
+# Output the LoadBalancer IP
+echo "Deployment completed successfully!"
+echo "Run 'kubectl get service monolith' to find the IP address for the monolith service."
+kubectl get service monolith --output jsonpath='{..status.loadBalancer.ingress[0].ip}'
+
