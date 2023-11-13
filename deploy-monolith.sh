@@ -8,12 +8,12 @@ REGION=eastus
 MONOLITH_IMAGE_TAG=monolith:1.0.0
 
 # Create a Resource Group
-#echo "Creating Resource Group..."
-#az group create --name $RESOURCE_GROUP --location $REGION
+echo "Creating Resource Group..."
+az group create --name $RESOURCE_GROUP --location $REGION
 
 # Create an ACR
-#echo "Creating Azure Container Registry..."
-#az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
+echo "Creating Azure Container Registry..."
+az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
 
 # Get the ACR login server which will be used to tag the images
 ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query loginServer --output tsv)
@@ -23,22 +23,34 @@ echo "Logging into ACR..."
 az acr login --name $ACR_NAME
 
 # Build Monolith Container
-#echo "Building Monolith Container..."
-#cd monolith
-#docker build -t $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG .
-#cd ..
+echo "Building Monolith Container..."
+cd monolith
+docker build -t $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG .
+cd ..
 
 # Push Monolith Container to ACR
-#echo "Pushing Monolith Container to ACR..."
-#docker push $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
+echo "Pushing Monolith Container to ACR..."
+docker push $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
 
 # Get ACR Repository ID
-#ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
 
-# Create AKS Cluster if not exists (can be skipped if the cluster is already set up)
-# Uncomment the following lines if you need to create an AKS cluster
-echo "Creating AKS Cluster..."
-az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --node-count 3 --enable-addons monitoring --generate-ssh-keys --location $REGION
+# Create AKS Cluster if not exists (check if the cluster exists first)
+echo "Checking if AKS Cluster exists..."
+if ! az aks show --resource-group $RESOURCE_GROUP --name $AKS_NAME --output none 2>/dev/null; then
+    echo "Creating AKS Cluster..."
+    az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --node-count 3 --enable-addons monitoring --generate-ssh-keys --location $REGION
+else
+    echo "AKS Cluster already exists. Skipping creation."
+fi
+
+# Assign AcrPull role to AKS if not already assigned
+# Fetch the AKS cluster's service principal clientId
+AKS_SP_ID=$(az aks show --name $AKS_NAME --resource-group $RESOURCE_GROUP --query "identity.principalId" -o tsv)
+
+# Assign AcrPull role to the AKS service principal for the ACR
+echo "Assigning AcrPull role to AKS SP for the ACR..."
+az role assignment create --assignee $AKS_SP_ID --role acrpull --scope $(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "id" -o tsv)
 
 # Get AKS credentials (needed for kubectl commands)
 echo "Getting AKS credentials..."
