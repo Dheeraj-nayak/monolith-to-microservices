@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: monolith
-        image: gcr.io/<PROJECT_ID>/monolith:1.0.0
+        image: cicdmicroservicesacr.azurecr.io/monolith:1.0.0
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
