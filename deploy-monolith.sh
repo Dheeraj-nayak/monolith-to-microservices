@@ -16,7 +16,7 @@ echo "Creating Azure Container Registry..."
 az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
 
 # Get the ACR login server which will be used to tag the images
-ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query loginServer --output tsv)
+#ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query loginServer --output tsv)
 
 # Login to ACR
 echo "Logging into ACR..."
@@ -33,24 +33,24 @@ echo "Pushing Monolith Container to ACR..."
 docker push $ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
 
 # Get ACR Repository ID
-ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+#ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
 
 # Create AKS Cluster if not exists (check if the cluster exists first)
 echo "Checking if AKS Cluster exists..."
 if ! az aks show --resource-group $RESOURCE_GROUP --name $AKS_NAME --output none 2>/dev/null; then
     echo "Creating AKS Cluster..."
-    az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --node-count 3 --enable-addons monitoring --generate-ssh-keys --location $REGION
+    az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --node-count 3 --attach-acr ${ACR_NAME} --generate-ssh-keys
 else
     echo "AKS Cluster already exists. Skipping creation."
 fi
 
 # Assign AcrPull role to AKS if not already assigned
 # Fetch the AKS cluster's service principal clientId
-AKS_SP_ID=$(az aks show --name $AKS_NAME --resource-group $RESOURCE_GROUP --query "identity.principalId" -o tsv)
+#AKS_SP_ID=$(az aks show --name $AKS_NAME --resource-group $RESOURCE_GROUP --query "identity.principalId" -o tsv)
 
 # Assign AcrPull role to the AKS service principal for the ACR
-echo "Assigning AcrPull role to AKS SP for the ACR..."
-az role assignment create --assignee $AKS_SP_ID --role acrpull --scope $(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "id" -o tsv)
+#echo "Assigning AcrPull role to AKS SP for the ACR..."
+#az role assignment create --assignee $AKS_SP_ID --role acrpull --scope $(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "id" -o tsv)
 
 # Get AKS credentials (needed for kubectl commands)
 echo "Getting AKS credentials..."
@@ -58,7 +58,7 @@ az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_NAME --overw
 
 # Deploy Monolith to AKS Cluster
 echo "Deploying Monolith to AKS Cluster..."
-kubectl create deployment monolith --image=$ACR_LOGIN_SERVER/$MONOLITH_IMAGE_TAG
+kubectl create deployment monolith --image=$ACR_NAME.azurecr.io/$MONOLITH_IMAGE_TAG
 
 # Expose Monolith Deployment as a LoadBalancer
 echo "Exposing Monolith Deployment as a LoadBalancer..."
@@ -76,4 +76,9 @@ done
 echo "Deployment completed successfully!"
 echo "Run 'kubectl get service monolith' to find the IP address for the monolith service."
 kubectl get service monolith --output jsonpath='{..status.loadBalancer.ingress[0].ip}'
+
+
+
+
+
 
