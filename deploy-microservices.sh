@@ -50,7 +50,7 @@ build_and_push_image() {
 # Build and Push Microservices Images
 build_and_push_image "orders" $ORDERS_IMAGE_TAG
 build_and_push_image "products" $PRODUCTS_IMAGE_TAG
-build_and_push_image "frontend" $FRONTEND_IMAGE_TAG
+#build_and_push_image "frontend" $FRONTEND_IMAGE_TAG
 
 # Create AKS Cluster if not exists
 echo "Checking if AKS Cluster exists..."
@@ -80,8 +80,43 @@ deploy_and_expose_microservice() {
 # Deploy Microservices
 deploy_and_expose_microservice "orders" $ORDERS_IMAGE_TAG 80 8081
 deploy_and_expose_microservice "products" $PRODUCTS_IMAGE_TAG 80 8082
+#deploy_and_expose_microservice "frontend" $FRONTEND_IMAGE_TAG 80 8080
+
+# Function to retrieve the LoadBalancer IP for a given service
+get_service_external_ip() {
+    SERVICE_NAME=$1
+    while : ; do
+        IP=$(kubectl get svc $SERVICE_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        if [ ! -z $IP ]; then
+            break
+        fi
+        echo "Waiting for external IP address for $SERVICE_NAME..."
+        sleep 10
+    done
+    echo $IP
+}
+
+# Retrieve and set the external IP addresses for orders and products
+ORDERS_IP=$(get_service_external_ip "orders")
+PRODUCTS_IP=$(get_service_external_ip "products")
+
+# Path to the .env file in the react-app directory
+ENV_FILE_PATH="$(pwd)/react-app/.env"
+
+# Update the .env file with the new IP addresses
+echo "Updating .env file with service IP addresses..."
+echo "REACT_APP_ORDERS_URL=http://$ORDERS_IP/api/orders" > $ENV_FILE_PATH
+echo "REACT_APP_PRODUCTS_URL=http://$PRODUCTS_IP/api/products" >> $ENV_FILE_PATH
+
+# Build and Push the frontend image after updating the .env
+echo "Building and pushing the frontend image..."
+build_and_push_image "frontend" $FRONTEND_IMAGE_TAG 
+
+# Deploy Frontend microservice
 deploy_and_expose_microservice "frontend" $FRONTEND_IMAGE_TAG 80 8080
 
 # Final Status
 echo "Deployment completed successfully!"
-echo "Run 'kubectl get service' to find the IP addresses for the microservices."
+echo "Run 'kubectl get service frontend' to find the IP addresses for the microservices app."
+
+
