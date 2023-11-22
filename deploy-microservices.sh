@@ -23,17 +23,29 @@ az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --lo
 echo "Logging into ACR..."
 az acr login --name $ACR_NAME
 
+BASE_PATH=./microservices/src
+
 # Function to Build and Push Image
 build_and_push_image() {
     SERVICE_NAME=$1
     IMAGE_TAG=$2
-    echo "Building $SERVICE_NAME Container..."
-    cd $SERVICE_NAME
+    SERVICE_PATH="$BASE_PATH/$SERVICE_NAME"
+    echo "Building Container for $SERVICE_NAME..."
+    
+    # Navigate to the microservice directory
+    cd $SERVICE_PATH
+    
+    # Build the Docker image
     docker build -t $ACR_NAME.azurecr.io/$IMAGE_TAG .
-    echo "Pushing $SERVICE_NAME Container to ACR..."
+    
+    # Push the Docker image to ACR
+    echo "Pushing Container to ACR..."
     docker push $ACR_NAME.azurecr.io/$IMAGE_TAG
-    cd ..
+    
+    # Return to the original script directory
+    cd - 
 }
+
 
 # Build and Push Microservices Images
 build_and_push_image "orders" $ORDERS_IMAGE_TAG
