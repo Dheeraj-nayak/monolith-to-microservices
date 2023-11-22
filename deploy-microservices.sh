@@ -107,7 +107,18 @@ ENV_FILE_PATH="$(pwd)/react-app/.env"
 # Update the .env file with the new IP addresses
 echo "Updating .env file with service IP addresses..."
 echo "REACT_APP_ORDERS_URL=http://$ORDERS_IP/api/orders" > $ENV_FILE_PATH
-echo "REACT_APP_PRODUCTS_URL=http://$PRODUCTS_IP/api/products" >> $ENV_FILE_PATH
+echo "REACT_APP_PRODUCTS_URL=http://$PRODUCTS_IP/api/products" > $ENV_FILE_PATH
+
+# Navigate to the react-app directory
+cd react-app
+
+# Install npm dependencies and rebuild the React app
+echo "Building React app with new service IP addresses..."
+npm install
+npm run build
+
+# Navigate back to the script's base directory
+cd ..
 
 # Build and Push the frontend image after updating the .env
 echo "Building and pushing the frontend image..."
