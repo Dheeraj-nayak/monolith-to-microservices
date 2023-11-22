@@ -85,6 +85,7 @@ deploy_and_expose_microservice "products" $PRODUCTS_IMAGE_TAG 80 8082
 # Function to retrieve the LoadBalancer IP for a given service
 get_service_external_ip() {
     SERVICE_NAME=$1
+    PORT=$2
     while : ; do
         IP=$(kubectl get svc $SERVICE_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
         if [ ! -z $IP ]; then
@@ -93,12 +94,12 @@ get_service_external_ip() {
         #echo "Waiting for external IP address for $SERVICE_NAME..."
         sleep 10
     done
-    echo $IP
+    echo "$IP:$PORT"
 }
 
 # Retrieve and set the external IP addresses for orders and products
-ORDERS_IP=$(get_service_external_ip "orders")
-PRODUCTS_IP=$(get_service_external_ip "products")
+ORDERS_IP=$(get_service_external_ip "orders" 8081)
+PRODUCTS_IP=$(get_service_external_ip "products" 8082)
 
 # Path to the .env file in the react-app directory
 ENV_FILE_PATH="$(pwd)/react-app/.env"
