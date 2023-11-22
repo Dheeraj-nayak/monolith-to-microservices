@@ -90,7 +90,7 @@ get_service_external_ip() {
         if [ ! -z $IP ]; then
             break
         fi
-        echo "Waiting for external IP address for $SERVICE_NAME..."
+        #echo "Waiting for external IP address for $SERVICE_NAME..."
         sleep 10
     done
     echo $IP
