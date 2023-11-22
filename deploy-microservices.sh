@@ -98,8 +98,8 @@ get_service_external_ip() {
 }
 
 # Retrieve and set the external IP addresses for orders and products
-ORDERS_IP=$(get_service_external_ip "orders" 8081)
-PRODUCTS_IP=$(get_service_external_ip "products" 8082)
+ORDERS_IP=$(get_service_external_ip "orders" 80)
+PRODUCTS_IP=$(get_service_external_ip "products" 80)
 
 # Path to the .env file in the react-app directory
 ENV_FILE_PATH="$(pwd)/react-app/.env"
