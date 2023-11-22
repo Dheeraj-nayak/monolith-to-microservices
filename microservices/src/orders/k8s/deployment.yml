@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: orders
-        image: gcr.io/<PROJECT_ID>/orders:1.0.0
+        image: microservicescicdacr.azurecr.io/orders:1.0.0
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

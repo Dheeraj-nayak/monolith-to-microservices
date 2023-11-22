@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: gcr.io/<PROJECT_ID>/frontend:1.0.0
+        image: microservicescicdacr.azurecr.io/frontend:1.0.0
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
