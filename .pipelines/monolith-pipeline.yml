@@ -23,6 +23,7 @@ steps:
 
 
 - script: |
+    cd ../
     chmod +x ./setup.sh
     chmod +x ./deploy-monolith.sh
     ./setup.sh
