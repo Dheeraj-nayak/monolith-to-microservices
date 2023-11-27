@@ -1,0 +1,34 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+
+- script: |
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
+    az account set --subscription $(subscriptionId)
+    curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+    docker run hello-world
+  displayName: 'Setup Environment'
+  env:
+    servicePrincipalId: $(servicePrincipalId)
+    servicePrincipalKey: $(servicePrincipalKey)
+    tenantId: $(tenantId)
+    subscriptionId: $(subscriptionId)
+
+
+
+- script: |
+    chmod +x ./setup.sh
+    chmod +x ./deploy-microservices.sh
+    ./setup.sh
+    ./deploy-microservices.sh
+  displayName: 'Deploy Microservices Application'
+
+- script: |
+    kubectl get service frontend
+  displayName: 'Get Service IP'
