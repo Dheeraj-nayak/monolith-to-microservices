@@ -1,35 +1,100 @@
 trigger:
 - main
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-steps:
-- checkout: self
-
-- script: |
-    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-    az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
-    az account set --subscription $(subscriptionId)
-    curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-    docker run hello-world
-  displayName: 'Setup Environment'
-  env:
-    servicePrincipalId: $(servicePrincipalId)
-    servicePrincipalKey: $(servicePrincipalKey)
-    tenantId: $(tenantId)
-    subscriptionId: $(subscriptionId)
+variables:
+- name: RESOURCE_GROUP
+  value: 'cicd_microservices' # Replace with your actual resource group name
+- name: ACR_NAME
+  value: 'cicdmicroservicesacr' # Replace with your actual ACR name
+- name: AKS_NAME
+  value: 'cicdmicroservicesaks' # Replace with your actual AKS cluster name
+- name: REGION
+  value: 'eastus' # Replace with your actual region
+- name: MONOLITH_IMAGE_TAG
+  value: 'monolith:1.0.0' # Replace with your actual image tag
 
 
+stages:
+- stage: Setup
+  jobs:
+  - job: InstallToolsAndDependencies
+    pool:
+      name: Default
+    steps:
+    - checkout: self
+    - script: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+        az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
+        az account set --subscription $(subscriptionId)
+        curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+        docker run hello-world
+      displayName: 'Setup Environment'
+      env:
+        servicePrincipalId: $(servicePrincipalId)
+        servicePrincipalKey: $(servicePrincipalKey)
+        tenantId: $(tenantId)
+        subscriptionId: $(subscriptionId)
 
-- script: |
-    cd ../
-    chmod +x ./setup.sh
-    chmod +x ./deploy-monolith.sh
-    ./setup.sh
-    ./deploy-monolith.sh
-  displayName: 'Deploy Monolith Application'
 
-- script: |
-    kubectl get service monolith
-  displayName: 'Get Service IPs'
+stages:
+- stage: BuildAndPush
+  jobs:
+  - job: BuildAndPushImage
+    pool:
+      name: Default
+    steps:
+    - checkout: self
+    - script: |
+        az acr login --name $(ACR_NAME) --username $(ACR_USERNAME) --password $(ACR_PASSWORD)
+        docker build -t $(ACR_NAME).azurecr.io/$(MONOLITH_IMAGE_TAG) ./monolith
+        docker push $(ACR_NAME).azurecr.io/$(MONOLITH_IMAGE_TAG)
+      displayName: 'Build and Push Monolith Image'
+      env:
+        ACR_USERNAME: $(ACR_USERNAME)
+        ACR_PASSWORD: $(ACR_PASSWORD)
+
+- stage: Deploy
+  jobs:
+  - deployment: DeployToAKS
+    environment: 'your-aks-environment-name'
+    pool:
+      name: Default
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
+              az account set --subscription $(subscriptionId)
+              az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(AKS_NAME) --overwrite-existing
+            displayName: 'Login to Azure and set credentials'
+            env:
+              servicePrincipalId: $(servicePrincipalId)
+              servicePrincipalKey: $(servicePrincipalKey)
+              tenantId: $(tenantId)
+              subscriptionId: $(subscriptionId)
+          - script: |
+              kubectl create secret docker-registry acr-auth --docker-server=$(ACR_NAME).azurecr.io --docker-username=$(ACR_USERNAME) --docker-password=$(ACR_PASSWORD) --docker-email=your-email@example.com
+              kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "acr-auth"}]}'
+            displayName: 'Create ACR Auth Secret'
+            env:
+              ACR_USERNAME: $(ACR_USERNAME)
+              ACR_PASSWORD: $(ACR_PASSWORD)
+          - script: |
+              kubectl create deployment monolith --image=$(ACR_NAME).azurecr.io/$(MONOLITH_IMAGE_TAG)
+              kubectl expose deployment monolith --type=LoadBalancer --port=80 --target-port=8080
+            displayName: 'Deploy Monolith Application'
+          - script: |
+              IP=""
+              while [ -z $IP ]; do
+                IP=$(kubectl get svc monolith -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                if [ -z "$IP" ]; then
+                  echo "Waiting for LoadBalancer IP..."
+                  sleep 10
+                else
+                  echo "Monolith service is available at: $IP"
+                  echo "##vso[task.setvariable variable=serviceIP]$IP"
+                fi
+              done
+            displayName: 'Get Monolith Service IP'
