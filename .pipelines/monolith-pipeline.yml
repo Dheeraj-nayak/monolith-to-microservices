@@ -35,8 +35,6 @@ stages:
         tenantId: $(tenantId)
         subscriptionId: $(subscriptionId)
 
-
-stages:
 - stage: BuildAndPush
   jobs:
   - job: BuildAndPushImage
@@ -56,7 +54,7 @@ stages:
 - stage: Deploy
   jobs:
   - deployment: DeployToAKS
-    environment: 'your-aks-environment-name'
+    environment: 'cicdmicroservicesaks'
     pool:
       name: Default
     strategy:
@@ -82,8 +80,15 @@ stages:
               ACR_USERNAME: $(ACR_USERNAME)
               ACR_PASSWORD: $(ACR_PASSWORD)
           - script: |
-              kubectl create deployment monolith --image=$(ACR_NAME).azurecr.io/$(MONOLITH_IMAGE_TAG)
-              kubectl expose deployment monolith --type=LoadBalancer --port=80 --target-port=8080
+              # Check if the deployment already exists
+              if kubectl get deployment monolith; then
+                echo "Updating existing monolith deployment..."
+                kubectl set image deployment/monolith monolith=$(ACR_NAME).azurecr.io/$(MONOLITH_IMAGE_TAG)
+              else
+                echo "Creating new monolith deployment..."
+                kubectl create deployment monolith --image=$(ACR_NAME).azurecr.io/$(MONOLITH_IMAGE_TAG)
+                kubectl expose deployment monolith --type=LoadBalancer --port=80 --target-port=8080
+              fi
             displayName: 'Deploy Monolith Application'
           - script: |
               IP=""
