@@ -55,7 +55,7 @@ stages:
 - stage: Deploy
   jobs:
   - deployment: DeployToAKS
-    environment: 'your-aks-environment-name'
+    environment: 'cicdmicroservicesaks'
     pool:
       name: Default
     strategy:
