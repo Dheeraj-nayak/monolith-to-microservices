@@ -103,3 +103,4 @@ stages:
                 fi
               done
             displayName: 'Get Monolith Service IP'
+
