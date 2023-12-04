@@ -15,8 +15,6 @@ az group create --name $RESOURCE_GROUP --location $REGION
 echo "Creating Azure Container Registry..."
 az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --location $REGION --admin-enabled true
 
-# Get the ACR login server which will be used to tag the images
-#ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query loginServer --output tsv)
 
 # Login to ACR
 echo "Logging into ACR..."
@@ -44,13 +42,6 @@ else
     echo "AKS Cluster already exists. Skipping creation."
 fi
 
-# Assign AcrPull role to AKS if not already assigned
-# Fetch the AKS cluster's service principal clientId
-#AKS_SP_ID=$(az aks show --name $AKS_NAME --resource-group $RESOURCE_GROUP --query "identity.principalId" -o tsv)
-
-# Assign AcrPull role to the AKS service principal for the ACR
-#echo "Assigning AcrPull role to AKS SP for the ACR..."
-#az role assignment create --assignee $AKS_SP_ID --role acrpull --scope $(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "id" -o tsv)
 
 # Get AKS credentials (needed for kubectl commands)
 echo "Getting AKS credentials..."

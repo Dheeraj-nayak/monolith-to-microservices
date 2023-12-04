@@ -1,0 +1,114 @@
+trigger:
+- main
+
+variables:
+- name: RESOURCE_GROUP
+  value: 'microservicescicd'  # Replace with your actual resource group name
+- name: ACR_NAME
+  value: 'microservicescicdacr'  # Replace with your actual ACR name
+- name: AKS_NAME
+  value: 'microservicescicdaks'  # Replace with your actual AKS cluster name
+- name: REGION
+  value: 'eastus'  # Replace with your actual region
+- name: ORDERS_IMAGE_TAG
+  value: 'orders:1.0.0'  # Replace with your actual image tag for orders
+- name: PRODUCTS_IMAGE_TAG
+  value: 'products:1.0.0'  # Replace with your actual image tag for products
+- name: FRONTEND_IMAGE_TAG
+  value: 'frontend:1.0.0'  # Replace with your actual image tag for frontend
+
+stages:
+- stage: Setup
+  jobs:
+  - job: InstallToolsAndDependencies
+    pool:
+      name: Default
+    steps:
+    - checkout: self
+    - script: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+        az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
+        az account set --subscription $(subscriptionId)
+        curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+        docker run hello-world
+      displayName: 'Setup Environment'
+      env:
+        servicePrincipalId: $(servicePrincipalId)
+        servicePrincipalKey: $(servicePrincipalKey)
+        tenantId: $(tenantId)
+        subscriptionId: $(subscriptionId)
+
+- stage: BuildAndPush
+  jobs:
+  - job: BuildAndPushImages
+    pool:
+      name: Default
+    steps:
+    - checkout: self
+    - script: |
+        az acr login --name $(ACR_NAME) --username $(ACR_USERNAME) --password $(ACR_PASSWORD)
+        docker build -t $(ACR_NAME).azurecr.io/$(ORDERS_IMAGE_TAG) ./microservices/src/orders
+        docker push $(ACR_NAME).azurecr.io/$(ORDERS_IMAGE_TAG)
+        docker build -t $(ACR_NAME).azurecr.io/$(PRODUCTS_IMAGE_TAG) ./microservices/src/products
+        docker push $(ACR_NAME).azurecr.io/$(PRODUCTS_IMAGE_TAG)
+        docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE_TAG) ./microservices/src/frontend
+        docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE_TAG)
+      displayName: 'Build and Push Microservices Images'
+      env:
+        ACR_USERNAME: $(ACR_USERNAME)
+        ACR_PASSWORD: $(ACR_PASSWORD)
+
+- stage: Deploy
+  jobs:
+  - deployment: DeployToAKS
+    environment: 'microservicescicdaks'  
+    pool:
+      name: Default
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
+              az account set --subscription $(subscriptionId)
+              az aks get-credentials --resource-group $(RESOURCE_GROUP) --name $(AKS_NAME) --overwrite-existing
+            displayName: 'Login to Azure and set credentials'
+            env:
+              servicePrincipalId: $(servicePrincipalId)
+              servicePrincipalKey: $(servicePrincipalKey)
+              tenantId: $(tenantId)
+              subscriptionId: $(subscriptionId)
+          - script: |
+              kubectl create secret docker-registry acr-auth --docker-server=$(ACR_NAME).azurecr.io --docker-username=$(ACR_USERNAME) --docker-password=$(ACR_PASSWORD) --docker-email=your-email@example.com
+              kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "acr-auth"}]}'
+            displayName: 'Create ACR Auth Secret'
+            env:
+              ACR_USERNAME: $(ACR_USERNAME)
+              ACR_PASSWORD: $(ACR_PASSWORD)
+          - script: |
+              # Update existing deployments or create new ones
+              for SERVICE in "orders" "products" "frontend"; do
+                IMAGE_TAG_VAR="${SERVICE^^}_IMAGE_TAG"
+                if kubectl get deployment $SERVICE; then
+                  echo "Updating existing $SERVICE deployment..."
+                  kubectl set image deployment/$SERVICE $SERVICE=$(ACR_NAME).azurecr.io/${!IMAGE_TAG_VAR}
+                else
+                  echo "Creating new $SERVICE deployment..."
+                  kubectl create deployment $SERVICE --image=$(ACR_NAME).azurecr.io/${!IMAGE_TAG_VAR}
+                fi
+              done
+            displayName: 'Deploy Microservices'
+          - script: |
+              # Expose services if they are not already exposed
+              kubectl expose deployment orders --type=LoadBalancer --port=80 --target-port=8081 --dry-run=client -o yaml | kubectl apply -f -
+              kubectl expose deployment products --type=LoadBalancer --port=80 --target-port=8082 --dry-run=client -o yaml | kubectl apply -f -
+              kubectl expose deployment frontend --type=LoadBalancer --port=80 --target-port=8080 --dry-run=client -o yaml | kubectl apply -f -
+            displayName: 'Expose Microservices'
+          - script: |
+              # Get service IPs
+              for SERVICE in "orders" "products" "frontend"; do
+                IP=$(kubectl get svc $SERVICE -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                echo "$SERVICE service is available at: $IP"
+              done
+            displayName: 'Get Microservices Service IPs'
