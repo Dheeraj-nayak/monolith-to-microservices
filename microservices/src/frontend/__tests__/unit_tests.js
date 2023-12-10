@@ -3,14 +3,14 @@ const app = require('../server'); // Adjust the path as necessary
 let server;
 
 beforeAll((done) => {
-  server = app.listen(4747, done); // Listen on a random available port
+  server = app.listen(8080, done); // Listen on a random available port
 });
 
 afterAll((done) => {
   server.close(done);
 });
 
-describe('Frontend Service Tests', () => { 
+describe('Frontend Service Tests', () => {
   it('should serve the main page', async () => {
     const res = await request(app).get('/');
     expect(res.statusCode).toEqual(200);
@@ -26,8 +26,7 @@ describe('Frontend Service Tests', () => {
   });
 
   it('should serve static assets', async () => {
-    // Assuming there's a static image at public/static/img/sample.jpg
-    const res = await request(app).get('/static/img/camera-lens.jpg');
+    const res = await request(app).get('/static/img/products/camera-lens.jpg');
     expect(res.statusCode).toEqual(200);
     expect(res.headers['content-type']).toContain('image/jpeg');
   });

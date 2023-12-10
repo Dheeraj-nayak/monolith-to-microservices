@@ -36,13 +36,13 @@ npm test
 echo "Testing completed."
 
 # Cleanup 
-echo "Stopping Docker Containers..."
-docker stop $(docker ps -q --filter ancestor=$ORDERS_IMAGE_TAG)
-docker stop $(docker ps -q --filter ancestor=$PRODUCTS_IMAGE_TAG)
-docker stop $(docker ps -q --filter ancestor=$FRONTEND_IMAGE_TAG)
+#echo "Stopping Docker Containers..."
+#docker stop $(docker ps -q --filter ancestor=$ORDERS_IMAGE_TAG)
+#docker stop $(docker ps -q --filter ancestor=$PRODUCTS_IMAGE_TAG)
+#docker stop $(docker ps -q --filter ancestor=$FRONTEND_IMAGE_TAG)
 
 # Remove Docker Images
-echo "Removing Docker Images..."
-docker rmi $ORDERS_IMAGE_TAG
-docker rmi $PRODUCTS_IMAGE_TAG
-docker rmi $FRONTEND_IMAGE_TAG
+#echo "Removing Docker Images..."
+#docker rmi $ORDERS_IMAGE_TAG
+#docker rmi $PRODUCTS_IMAGE_TAG
+#docker rmi $FRONTEND_IMAGE_TAG
