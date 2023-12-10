@@ -1,5 +1,14 @@
 const request = require('supertest');
 const app = require('../server'); // Adjust the path as necessary
+let server;
+
+beforeAll((done) => {
+  server = app.listen(8082, done);
+});
+
+afterAll((done) => {
+  server.close(done);
+});
 
 describe('Fetch All Products', () => {
   it('should return all products', async () => {

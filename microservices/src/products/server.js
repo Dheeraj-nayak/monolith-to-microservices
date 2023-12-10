@@ -32,6 +32,9 @@ app.get("/api/products/:id", (req, res) =>
   res.json(products.find(product => product.id === req.params.id))
 );
 
-app.listen(port, () =>
-  console.log(`Products microservice listening on port ${port}!`)
-);
+//app.listen(port, () =>
+//  console.log(`Products microservice listening on port ${port}!`)
+//);
+
+// Export the app for testing
+module.exports = app;

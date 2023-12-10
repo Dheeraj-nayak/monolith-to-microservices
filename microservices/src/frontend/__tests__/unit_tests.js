@@ -1,6 +1,16 @@
 const request = require('supertest');
 const app = require('../server'); // Adjust the path as necessary
 
+let server;
+
+beforeAll((done) => {
+  server = app.listen(8080, done);
+});
+
+afterAll((done) => {
+  server.close(done);
+});
+
 describe('Static File Serving', () => {
   it('should serve static files', async () => {
     const res = await request(app).get('/');

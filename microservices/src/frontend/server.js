@@ -31,4 +31,5 @@ app.get("/*", (req, res) => {
 });
 
 //Start the server
-app.listen(port, () => console.log(`Frontend microservice listening on port ${port}!`));
+//app.listen(port, () => console.log(`Frontend microservice listening on port ${port}!`));
+module.exports = app;
