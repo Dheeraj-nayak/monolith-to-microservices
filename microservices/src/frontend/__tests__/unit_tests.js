@@ -3,14 +3,14 @@ const app = require('../server'); // Adjust the path as necessary
 let server;
 
 beforeAll((done) => {
-  server = app.listen(0, done); // Listen on a random available port
+  server = app.listen(8080, done); // Listen on a random available port
 });
 
 afterAll((done) => {
   server.close(done);
 });
 
-describe('Frontend Service Tests', () => {
+describe('Frontend Service Tests', () => { 
   it('should serve the main page', async () => {
     const res = await request(app).get('/');
     expect(res.statusCode).toEqual(200);
