@@ -3,7 +3,7 @@ const app = require('../server'); // Adjust the path as necessary
 let server;
 
 beforeAll((done) => {
-  server = app.listen(8080, done); // Listen on a random available port
+  server = app.listen(4747, done); // Listen on a random available port
 });
 
 afterAll((done) => {
