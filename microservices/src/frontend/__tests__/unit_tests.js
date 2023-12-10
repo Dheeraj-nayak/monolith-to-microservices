@@ -4,11 +4,15 @@ const app = require('../server'); // Adjust the path as necessary
 let server;
 
 beforeAll((done) => {
-  server = app.listen(8080, done);
+  server = app.listen(0, done); // Listen on a random available port
 });
 
 afterAll((done) => {
   server.close(done);
+});
+
+it('should start server', () => {
+  expect(server.listening).toBe(true);
 });
 
 describe('Static File Serving', () => {
