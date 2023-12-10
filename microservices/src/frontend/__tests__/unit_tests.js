@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('./server'); // Adjust the path as necessary
+const app = require('../server'); // Adjust the path as necessary
 
 describe('Static File Serving', () => {
   it('should serve static files', async () => {
