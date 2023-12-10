@@ -21,9 +21,9 @@ describe('Fetch All Products', () => {
 
 describe('Fetch Product by ID', () => {
     it('should return a specific product', async () => {
-      const res = await request(app).get('/api/products/1'); // Assuming '1' is a valid ID
+      const res = await request(app).get('/api/products/1YMWWN1N4O'); // Assuming '1' is a valid ID
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('id', '1');
+      expect(res.body).toHaveProperty('id', '1YMWWN1N4O');
     });
   });
 

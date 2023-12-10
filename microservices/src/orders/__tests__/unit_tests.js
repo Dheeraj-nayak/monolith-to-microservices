@@ -22,9 +22,9 @@ describe('Fetch All Orders', () => {
 
 describe('Fetch Order by ID', () => {
     it('should return a specific order', async () => {
-      const res = await request(app).get('/api/orders/1'); // Assuming '1' is a valid ID
+      const res = await request(app).get('/api/orders/ORD-000004-MICROSERVICE'); // Assuming '1' is a valid ID
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('id', '1');
+      expect(res.body).toHaveProperty('id', 'ORD-000004-MICROSERVICE');
     });
   });
 
