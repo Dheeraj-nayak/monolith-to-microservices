@@ -11,6 +11,8 @@ afterAll((done) => {
   server.close(done);
 });
 
+
+//Fetch All Orders Test
 describe('Fetch All Orders', () => {
   it('should return all orders', async () => {
     const res = await request(app).get('/api/orders');
@@ -19,7 +21,7 @@ describe('Fetch All Orders', () => {
   });
 });
 
-
+//Fetch Order by ID Test
 describe('Fetch Order by ID', () => {
     it('should return a specific order', async () => {
       const res = await request(app).get('/api/orders/ORD-000004-MICROSERVICE'); // Assuming '1' is a valid ID
@@ -28,7 +30,8 @@ describe('Fetch Order by ID', () => {
     });
   });
 
-  
+
+//  CORS Handling Test  
 describe('CORS Handling', () => {
     it('should enable CORS', async () => {
       const res = await request(app).get('/api/orders');

@@ -10,6 +10,7 @@ afterAll((done) => {
   server.close(done);
 });
 
+//Fetch All Products Test
 describe('Fetch All Products', () => {
   it('should return all products', async () => {
     const res = await request(app).get('/api/products');
@@ -18,7 +19,7 @@ describe('Fetch All Products', () => {
   });
 });
 
-
+//Fetch Product by ID Test
 describe('Fetch Product by ID', () => {
     it('should return a specific product', async () => {
       const res = await request(app).get('/api/products/1YMWWN1N4O'); // Assuming '1' is a valid ID
@@ -27,7 +28,7 @@ describe('Fetch Product by ID', () => {
     });
   });
 
-  
+//  CORS Handling Test
  describe('CORS Handling', () => {
     it('should enable CORS', async () => {
       const res = await request(app).get('/api/products');
