@@ -35,4 +35,26 @@ describe('Fetch Product by ID', () => {
       expect(res.headers['access-control-allow-origin']).toEqual('*');
     });
   });
+
+
+//Mock tests
+const ordersData = require('../data/products.json');
+
+  jest.mock('../data/products.json', () => ({
+    products: [
+      { id: "OLJCESPC7Z", name: "MS - Vintage Typewriter", cost: 67.99 },
+      { id: "66VCHSJNUP", name: "MS - Vintage Camera Lens", cost: 12.49 },
+    ],
+  }));
+  
+  describe('Products Service Fetch All Products', () => {
+    it('should return all mocked products', async () => {
+      const res = await request(app).get('/api/products');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toEqual([
+        { id: "OLJCESPC7Z", name: "MS - Vintage Typewriter", cost: 67.99 },
+        { id: "66VCHSJNUP", name: "MS - Vintage Camera Lens", cost: 12.49 },
+      ]);
+    });
+  });
   

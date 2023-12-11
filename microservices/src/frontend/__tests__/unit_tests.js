@@ -29,7 +29,7 @@ describe('Frontend Service Tests', () => {
   });
 
 
-  //Static File Serving Test
+  //Mock Static File Serving
   it('should serve static assets', async () => {
     const res = await request(app).get('/static/img/products/camera-lens.jpg');
     expect(res.statusCode).toEqual(200);
