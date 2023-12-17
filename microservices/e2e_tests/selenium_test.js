@@ -4,7 +4,7 @@ async function testMicroservicesApp() {
     let driver = await new Builder().forBrowser('chrome').build();
     try {
         // Navigate to the Home page
-        await driver.get('http:/10.0.0.4:8080/');
+        await driver.get('http://10.0.0.4:8080');
         await driver.wait(until.titleIs('Your Page Title'), 10000); 
 
         // Validate Home Page
