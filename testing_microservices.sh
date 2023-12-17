@@ -33,7 +33,16 @@ npm test
 cd ../products
 npm test
 
-echo "Testing completed."
+echo "Unit, Integration and Component Testing completed."
+
+
+# Run e2e tests
+echo "Running e2e tests..."
+cd ../../e2e_tests
+node selenium_test.js
+
+echo "e2e Testing completed."
+
 
 # Cleanup 
 echo "Stopping Docker Containers..."
