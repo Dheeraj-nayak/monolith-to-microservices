@@ -37,7 +37,7 @@ echo "Unit, Integration and Component Testing completed."
 
 
 # Navigate to e2e_tests directory
-cd microservices/e2e_tests
+cd ../../e2e_tests
 
 # Install Selenium WebDriver for e2e tests
 echo "Installing Selenium WebDriver..."
