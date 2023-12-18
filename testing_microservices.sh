@@ -35,14 +35,16 @@ npm test
 
 echo "Unit, Integration and Component Testing completed."
 
-
-# Navigate to e2e_tests directory
 cd ../../e2e_tests
 
 # Install Selenium WebDriver for e2e tests
 echo "Installing Selenium WebDriver..."
-npm init -y # Initializes a package.json if not already present
 npm install selenium-webdriver
+
+# Run e2e tests
+echo "Running e2e tests..."
+
+node selenium_test.js
 
 echo "e2e Testing completed."
 
