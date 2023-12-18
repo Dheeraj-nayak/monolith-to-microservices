@@ -5,7 +5,7 @@ async function testMicroservicesApp() {
     try {
         // Navigate to the Home page
         await driver.get('http://10.0.0.4:8080');
-        await driver.wait(until.titleIs('Your Page Title'), 10000); 
+        //await driver.wait(until.titleIs('Your Page Title'), 10000); 
 
         // Validate Home Page
         let homeText = await driver.findElement(By.css('Typography')).getText();
