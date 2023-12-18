@@ -10,6 +10,8 @@ async function testMicroservicesApp() {
     options.addArguments('--disable-dev-shm-usage');
     options.addArguments('--disable-gpu'); // Disable GPU hardware acceleration
     options.addArguments('--window-size=1920,1080'); // Specify window size
+    options.addArguments('--disable-software-rasterizer');
+    options.addArguments('--disable-extensions'); // Disable all extensions
 
 
     let driver = await new Builder()
